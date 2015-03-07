@@ -99,7 +99,7 @@ static int xmp_readlink(const char *path, char *buf, size_t size)
 struct xmp_dirp {
 	DIR *dp;
 	struct dirent *entry;
-	off_t offset;
+	off64_t offset;
 };
 
 static int xmp_opendir(const char *path, struct fuse_file_info *fi)
@@ -128,7 +128,7 @@ static inline struct xmp_dirp *get_dirp(struct fuse_file_info *fi)
 }
 
 static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-		       off_t offset, struct fuse_file_info *fi,
+		       off64_t offset, struct fuse_file_info *fi,
 		       enum fuse_readdir_flags flags)
 {
 	struct xmp_dirp *d = get_dirp(fi);
@@ -141,7 +141,7 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	}
 	while (1) {
 		struct stat st;
-		off_t nextoff;
+		off64_t nextoff;
 		enum fuse_fill_dir_flags fill_flags = 0;
 
 		if (!d->entry) {
@@ -290,7 +290,7 @@ static int xmp_chown(const char *path, uid_t uid, gid_t gid)
 	return 0;
 }
 
-static int xmp_truncate(const char *path, off_t size)
+static int xmp_truncate(const char *path, off64_t size)
 {
 	int res;
 
@@ -301,7 +301,7 @@ static int xmp_truncate(const char *path, off_t size)
 	return 0;
 }
 
-static int xmp_ftruncate(const char *path, off_t size,
+static int xmp_ftruncate(const char *path, off64_t size,
 			 struct fuse_file_info *fi)
 {
 	int res;
@@ -353,7 +353,7 @@ static int xmp_open(const char *path, struct fuse_file_info *fi)
 	return 0;
 }
 
-static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
+static int xmp_read(const char *path, char *buf, size_t size, off64_t offset,
 		    struct fuse_file_info *fi)
 {
 	int res;
@@ -367,7 +367,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 }
 
 static int xmp_read_buf(const char *path, struct fuse_bufvec **bufp,
-			size_t size, off_t offset, struct fuse_file_info *fi)
+			size_t size, off64_t offset, struct fuse_file_info *fi)
 {
 	struct fuse_bufvec *src;
 
@@ -389,12 +389,12 @@ static int xmp_read_buf(const char *path, struct fuse_bufvec **bufp,
 }
 
 static int xmp_write(const char *path, const char *buf, size_t size,
-		     off_t offset, struct fuse_file_info *fi)
+		     off64_t offset, struct fuse_file_info *fi)
 {
 	int res;
 
 	(void) path;
-	res = pwrite(fi->fh, buf, size, offset);
+	res = pwrite64(fi->fh, buf, size, offset);
 	if (res == -1)
 		res = -errno;
 
@@ -402,7 +402,7 @@ static int xmp_write(const char *path, const char *buf, size_t size,
 }
 
 static int xmp_write_buf(const char *path, struct fuse_bufvec *buf,
-		     off_t offset, struct fuse_file_info *fi)
+		     off64_t offset, struct fuse_file_info *fi)
 {
 	struct fuse_bufvec dst = FUSE_BUFVEC_INIT(fuse_buf_size(buf));
 
@@ -473,7 +473,7 @@ static int xmp_fsync(const char *path, int isdatasync,
 
 #ifdef HAVE_POSIX_FALLOCATE
 static int xmp_fallocate(const char *path, int mode,
-			off_t offset, off_t length, struct fuse_file_info *fi)
+			off64_t offset, off64_t length, struct fuse_file_info *fi)
 {
 	(void) path;
 

@@ -126,7 +126,7 @@ static void dirbuf_add(fuse_req_t req, struct dirbuf *b, const char *name,
 #define min(x, y) ((x) < (y) ? (x) : (y))
 
 static int reply_buf_limited(fuse_req_t req, const char *buf, size_t bufsize,
-			     off_t off, size_t maxsize)
+			     off64_t off, size_t maxsize)
 {
 	if (off < bufsize)
 		return fuse_reply_buf(req, buf + off,
@@ -136,7 +136,7 @@ static int reply_buf_limited(fuse_req_t req, const char *buf, size_t bufsize,
 }
 
 static void hello_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
-			     off_t off, struct fuse_file_info *fi)
+			     off64_t off, struct fuse_file_info *fi)
 {
 	(void) fi;
 
@@ -166,7 +166,7 @@ static void hello_ll_open(fuse_req_t req, fuse_ino_t ino,
 }
 
 static void hello_ll_read(fuse_req_t req, fuse_ino_t ino, size_t size,
-			  off_t off, struct fuse_file_info *fi)
+			  off64_t off, struct fuse_file_info *fi)
 {
 	(void) fi;
 

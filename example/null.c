@@ -45,7 +45,7 @@ static int null_getattr(const char *path, struct stat *stbuf)
 	return 0;
 }
 
-static int null_truncate(const char *path, off_t size)
+static int null_truncate(const char *path, off64_t size)
 {
 	(void) size;
 
@@ -66,7 +66,7 @@ static int null_open(const char *path, struct fuse_file_info *fi)
 }
 
 static int null_read(const char *path, char *buf, size_t size,
-		     off_t offset, struct fuse_file_info *fi)
+		     off64_t offset, struct fuse_file_info *fi)
 {
 	(void) buf;
 	(void) offset;
@@ -82,7 +82,7 @@ static int null_read(const char *path, char *buf, size_t size,
 }
 
 static int null_write(const char *path, const char *buf, size_t size,
-		      off_t offset, struct fuse_file_info *fi)
+		      off64_t offset, struct fuse_file_info *fi)
 {
 	(void) buf;
 	(void) offset;

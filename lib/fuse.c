@@ -50,6 +50,7 @@
 #define FUSE_DEFAULT_INTR_SIGNAL SIGUSR1
 
 #define FUSE_UNKNOWN_INO 0xffffffff
+
 #define OFFSET_MAX 0x7fffffffffffffffLL
 
 #define NODE_TABLE_MIN_SIZE 8192
@@ -156,8 +157,8 @@ struct fuse {
 
 struct lock {
 	int type;
-	off_t start;
-	off_t end;
+	off64_t start;
+	off64_t end;
 	pid_t pid;
 	uint64_t owner;
 	struct lock *next;
@@ -175,7 +176,7 @@ struct node {
 	int open_count;
 	struct timespec stat_updated;
 	struct timespec mtime;
-	off_t size;
+	off64_t size;
 	struct lock *locks;
 	unsigned int is_hidden : 1;
 	unsigned int cache_valid : 1;
@@ -220,9 +221,11 @@ struct fuse_context_i {
 	fuse_req_t req;
 };
 
+#if !defined(__ANDROID__)
 /* Defined by FUSE_REGISTER_MODULE() in lib/modules/subdir.c and iconv.c.  */
 extern fuse_module_factory_t fuse_module_subdir_factory;
 extern fuse_module_factory_t fuse_module_iconv_factory;
+#endif
 
 static pthread_key_t fuse_context_key;
 static pthread_mutex_t fuse_context_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -1708,7 +1711,7 @@ static void fuse_free_buf(struct fuse_bufvec *buf)
 }
 
 int fuse_fs_read_buf(struct fuse_fs *fs, const char *path,
-		     struct fuse_bufvec **bufp, size_t size, off_t off,
+		     struct fuse_bufvec **bufp, size_t size, off64_t off,
 		     struct fuse_file_info *fi)
 {
 	fuse_get_context()->private_data = fs->user_data;
@@ -1763,7 +1766,7 @@ int fuse_fs_read_buf(struct fuse_fs *fs, const char *path,
 }
 
 int fuse_fs_read(struct fuse_fs *fs, const char *path, char *mem, size_t size,
-		 off_t off, struct fuse_file_info *fi)
+		 off64_t off, struct fuse_file_info *fi)
 {
 	int res;
 	struct fuse_bufvec *buf = NULL;
@@ -1781,7 +1784,7 @@ int fuse_fs_read(struct fuse_fs *fs, const char *path, char *mem, size_t size,
 }
 
 int fuse_fs_write_buf(struct fuse_fs *fs, const char *path,
-		      struct fuse_bufvec *buf, off_t off,
+		      struct fuse_bufvec *buf, off64_t off,
 		      struct fuse_file_info *fi)
 {
 	fuse_get_context()->private_data = fs->user_data;
@@ -1845,7 +1848,7 @@ out:
 }
 
 int fuse_fs_write(struct fuse_fs *fs, const char *path, const char *mem,
-		  size_t size, off_t off, struct fuse_file_info *fi)
+		  size_t size, off64_t off, struct fuse_file_info *fi)
 {
 	struct fuse_bufvec bufv = FUSE_BUFVEC_INIT(size);
 
@@ -1908,7 +1911,11 @@ int fuse_fs_statfs(struct fuse_fs *fs, const char *path, struct statvfs *buf)
 
 		return fs->op.statfs(path, buf);
 	} else {
+#if defined(__ANDROID__)
+		buf->f_namelen = 255;
+#else
 		buf->f_namemax = 255;
+#endif
 		buf->f_bsize = 512;
 		return 0;
 	}
@@ -1930,7 +1937,7 @@ int fuse_fs_releasedir(struct fuse_fs *fs, const char *path,
 }
 
 int fuse_fs_readdir(struct fuse_fs *fs, const char *path, void *buf,
-		    fuse_fill_dir_t filler, off_t off,
+		    fuse_fill_dir_t filler, off64_t off,
 		    struct fuse_file_info *fi,
 		    enum fuse_readdir_flags flags)
 {
@@ -2034,7 +2041,7 @@ int fuse_fs_chown(struct fuse_fs *fs, const char *path, uid_t uid, gid_t gid)
 	}
 }
 
-int fuse_fs_truncate(struct fuse_fs *fs, const char *path, off_t size)
+int fuse_fs_truncate(struct fuse_fs *fs, const char *path, off64_t size)
 {
 	fuse_get_context()->private_data = fs->user_data;
 	if (fs->op.truncate) {
@@ -2048,7 +2055,7 @@ int fuse_fs_truncate(struct fuse_fs *fs, const char *path, off_t size)
 	}
 }
 
-int fuse_fs_ftruncate(struct fuse_fs *fs, const char *path, off_t size,
+int fuse_fs_ftruncate(struct fuse_fs *fs, const char *path, off64_t size,
 		      struct fuse_file_info *fi)
 {
 	fuse_get_context()->private_data = fs->user_data;
@@ -2257,7 +2264,7 @@ int fuse_fs_poll(struct fuse_fs *fs, const char *path,
 }
 
 int fuse_fs_fallocate(struct fuse_fs *fs, const char *path, int mode,
-		off_t offset, off_t length, struct fuse_file_info *fi)
+		off64_t offset, off64_t length, struct fuse_file_info *fi)
 {
 	fuse_get_context()->private_data = fs->user_data;
 	if (fs->op.fallocate) {
@@ -3167,7 +3174,7 @@ static void fuse_lib_open(fuse_req_t req, fuse_ino_t ino,
 }
 
 static void fuse_lib_read(fuse_req_t req, fuse_ino_t ino, size_t size,
-			  off_t off, struct fuse_file_info *fi)
+			  off64_t off, struct fuse_file_info *fi)
 {
 	struct fuse *f = req_fuse_prepare(req);
 	struct fuse_bufvec *buf = NULL;
@@ -3193,7 +3200,7 @@ static void fuse_lib_read(fuse_req_t req, fuse_ino_t ino, size_t size,
 }
 
 static void fuse_lib_write_buf(fuse_req_t req, fuse_ino_t ino,
-			       struct fuse_bufvec *buf, off_t off,
+			       struct fuse_bufvec *buf, off64_t off,
 			       struct fuse_file_info *fi)
 {
 	struct fuse *f = req_fuse_prepare(req);
@@ -3362,7 +3369,7 @@ static fuse_ino_t lookup_nodeid(struct fuse *f, fuse_ino_t parent,
 }
 
 static int fill_dir(void *dh_, const char *name, const struct stat *statp,
-		    off_t off, enum fuse_fill_dir_flags flags)
+		    off64_t off, enum fuse_fill_dir_flags flags)
 {
 	struct fuse_dh *dh = (struct fuse_dh *) dh_;
 	struct stat stbuf;
@@ -3419,7 +3426,7 @@ static int fill_dir(void *dh_, const char *name, const struct stat *statp,
 }
 
 static int fill_dir_plus(void *dh_, const char *name, const struct stat *statp,
-			 off_t off, enum fuse_fill_dir_flags flags)
+			 off64_t off, enum fuse_fill_dir_flags flags)
 {
 	struct fuse_dh *dh = (struct fuse_dh *) dh_;
 	struct fuse_entry_param e = {
@@ -3491,7 +3498,7 @@ static void free_direntries(struct fuse_direntry *de)
 }
 
 static int readdir_fill(struct fuse *f, fuse_req_t req, fuse_ino_t ino,
-			size_t size, off_t off, struct fuse_dh *dh,
+			size_t size, off64_t off, struct fuse_dh *dh,
 			struct fuse_file_info *fi,
 			enum fuse_readdir_flags flags)
 {
@@ -3531,9 +3538,9 @@ static int readdir_fill(struct fuse *f, fuse_req_t req, fuse_ino_t ino,
 }
 
 static int readdir_fill_from_list(fuse_req_t req, struct fuse_dh *dh,
-				  off_t off, enum fuse_readdir_flags flags)
+				  off64_t off, enum fuse_readdir_flags flags)
 {
-	off_t pos;
+	off64_t pos;
 	struct fuse_direntry *de = dh->first;
 
 	dh->len = 0;
@@ -3575,7 +3582,7 @@ static int readdir_fill_from_list(fuse_req_t req, struct fuse_dh *dh,
 }
 
 static void fuse_readdir_common(fuse_req_t req, fuse_ino_t ino, size_t size,
-				off_t off, struct fuse_file_info *llfi,
+				off64_t off, struct fuse_file_info *llfi,
 				enum fuse_readdir_flags flags)
 {
 	struct fuse *f = req_fuse_prepare(req);
@@ -3610,13 +3617,13 @@ out:
 }
 
 static void fuse_lib_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
-			     off_t off, struct fuse_file_info *llfi)
+			     off64_t off, struct fuse_file_info *llfi)
 {
 	fuse_readdir_common(req, ino, size, off, llfi, 0);
 }
 
 static void fuse_lib_readdirplus(fuse_req_t req, fuse_ino_t ino, size_t size,
-				  off_t off, struct fuse_file_info *llfi)
+				  off64_t off, struct fuse_file_info *llfi)
 {
 	fuse_readdir_common(req, ino, size, off, llfi, FUSE_READDIR_PLUS);
 }
@@ -4179,7 +4186,7 @@ static void fuse_lib_poll(fuse_req_t req, fuse_ino_t ino,
 }
 
 static void fuse_lib_fallocate(fuse_req_t req, fuse_ino_t ino, int mode,
-		off_t offset, off_t length, struct fuse_file_info *fi)
+		off64_t offset, off64_t length, struct fuse_file_info *fi)
 {
 	struct fuse *f = req_fuse_prepare(req);
 	struct fuse_intr_data d;
@@ -4593,10 +4600,29 @@ static int node_table_init(struct node_table *t)
 	return 0;
 }
 
+static void thread_exit_handler(int sig)
+{
+	pthread_exit(0);
+}
+
 static void *fuse_prune_nodes(void *fuse)
 {
 	struct fuse *f = fuse;
 	int sleep_time;
+
+#if defined(__ANDROID__)
+	struct sigaction actions;
+	memset(&actions, 0, sizeof(actions));
+	sigemptyset(&actions.sa_mask);
+	actions.sa_flags = 0;
+	actions.sa_handler = thread_exit_handler;
+	sigaction(SIGUSR1, &actions, NULL);
+
+	sigset_t setusr1;
+	sigemptyset(&setusr1);
+	sigaddset(&setusr1, SIGUSR1);
+	pthread_sigmask(SIG_BLOCK, &setusr1, NULL);
+#endif
 
 	while(1) {
 		sleep_time = fuse_clean_cache(f);
@@ -4617,7 +4643,11 @@ void fuse_stop_cleanup_thread(struct fuse *f)
 {
 	if (lru_enabled(f)) {
 		pthread_mutex_lock(&f->lock);
+#if defined(__ANDROID__)
+		pthread_kill(f->prune_thread, SIGUSR1);
+#else
 		pthread_cancel(f->prune_thread);
+#endif
 		pthread_mutex_unlock(&f->lock);
 		pthread_join(f->prune_thread, NULL);
 	}
@@ -4633,6 +4663,7 @@ struct fuse *fuse_new(struct fuse_chan *ch, struct fuse_args *args,
 	struct fuse_lowlevel_ops llop = fuse_path_ops;
 
 	pthread_mutex_lock(&fuse_context_lock);
+#if !defined(__ANDROID__)
 	static int builtin_modules_registered = 0;
 	/* Have the builtin modules already been registered? */
 	if (builtin_modules_registered == 0) {
@@ -4641,6 +4672,7 @@ struct fuse *fuse_new(struct fuse_chan *ch, struct fuse_args *args,
 		fuse_register_module("iconv", fuse_module_iconv_factory, NULL);
 		builtin_modules_registered= 1;
 	}
+#endif
 	pthread_mutex_unlock(&fuse_context_lock);
 
 

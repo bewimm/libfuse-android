@@ -386,7 +386,7 @@ struct fuse_buf {
 	 *
 	 * Used if FUSE_BUF_FD_SEEK flag is set.
 	 */
-	off_t pos;
+	off64_t pos;
 };
 
 /**
@@ -502,16 +502,16 @@ void fuse_remove_signal_handlers(struct fuse_session *se);
 
 
 /*
- * This interface uses 64 bit off_t.
+ * This interface uses 64 bit off64_t.
  *
  * On 32bit systems please add -D_FILE_OFFSET_BITS=64 to your compile flags!
  */
 
 #if defined(__GNUC__) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 6) && !defined __cplusplus
-_Static_assert(sizeof(off_t) == 8, "fuse: off_t must be 64bit");
+_Static_assert(sizeof(off64_t) == 8, "fuse: off64_t must be 64bit");
 #else
-struct _fuse_off_t_must_be_64bit_dummy_struct \
-	{ unsigned _fuse_off_t_must_be_64bit:((sizeof(off_t) == 8) ? 1 : -1); };
+struct _fuse_off64_t_must_be_64bit_dummy_struct \
+	{ unsigned _fuse_off64_t_must_be_64bit:((sizeof(off64_t) == 8) ? 1 : -1); };
 #endif
 
 #endif /* _FUSE_COMMON_H_ */

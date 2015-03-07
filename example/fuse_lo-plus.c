@@ -253,7 +253,7 @@ struct lo_dirp {
 	int fd;
 	DIR *dp;
 	struct dirent *entry;
-	off_t offset;
+	off64_t offset;
 };
 
 static struct lo_dirp *lo_dirp(struct fuse_file_info *fi)
@@ -295,7 +295,7 @@ out_err:
 }
 
 static void lo_do_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
-			  off_t offset, struct fuse_file_info *fi, int plus)
+			  off64_t offset, struct fuse_file_info *fi, int plus)
 {
 	struct lo_dirp *d = lo_dirp(fi);
 	char *buf;
@@ -318,7 +318,7 @@ static void lo_do_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 	rem = size;
 	while (1) {
 		size_t entsize;
-		off_t nextoff;
+		off64_t nextoff;
 
 		if (!d->entry) {
 			errno = 0;
@@ -371,13 +371,13 @@ error:
 }
 
 static void lo_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
-		       off_t offset, struct fuse_file_info *fi)
+		       off64_t offset, struct fuse_file_info *fi)
 {
 	lo_do_readdir(req, ino, size, offset, fi, 0);
 }
 
 static void lo_readdirplus(fuse_req_t req, fuse_ino_t ino, size_t size,
-			   off_t offset, struct fuse_file_info *fi)
+			   off64_t offset, struct fuse_file_info *fi)
 {
 	lo_do_readdir(req, ino, size, offset, fi, 1);
 }
@@ -415,7 +415,7 @@ static void lo_release(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi
 }
 
 static void lo_read(fuse_req_t req, fuse_ino_t ino, size_t size,
-			  off_t offset, struct fuse_file_info *fi)
+			  off64_t offset, struct fuse_file_info *fi)
 {
 	struct fuse_bufvec buf = FUSE_BUFVEC_INIT(size);
 

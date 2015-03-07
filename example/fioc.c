@@ -115,7 +115,7 @@ static int fioc_open(const char *path, struct fuse_file_info *fi)
 	return -ENOENT;
 }
 
-static int fioc_do_read(char *buf, size_t size, off_t offset)
+static int fioc_do_read(char *buf, size_t size, off64_t offset)
 {
 	if (offset >= fioc_size)
 		return 0;
@@ -129,7 +129,7 @@ static int fioc_do_read(char *buf, size_t size, off_t offset)
 }
 
 static int fioc_read(const char *path, char *buf, size_t size,
-		     off_t offset, struct fuse_file_info *fi)
+		     off64_t offset, struct fuse_file_info *fi)
 {
 	(void) fi;
 
@@ -139,7 +139,7 @@ static int fioc_read(const char *path, char *buf, size_t size,
 	return fioc_do_read(buf, size, offset);
 }
 
-static int fioc_do_write(const char *buf, size_t size, off_t offset)
+static int fioc_do_write(const char *buf, size_t size, off64_t offset)
 {
 	if (fioc_expand(offset + size))
 		return -ENOMEM;
@@ -150,7 +150,7 @@ static int fioc_do_write(const char *buf, size_t size, off_t offset)
 }
 
 static int fioc_write(const char *path, const char *buf, size_t size,
-		      off_t offset, struct fuse_file_info *fi)
+		      off64_t offset, struct fuse_file_info *fi)
 {
 	(void) fi;
 
@@ -160,7 +160,7 @@ static int fioc_write(const char *path, const char *buf, size_t size,
 	return fioc_do_write(buf, size, offset);
 }
 
-static int fioc_truncate(const char *path, off_t size)
+static int fioc_truncate(const char *path, off64_t size)
 {
 	if (fioc_file_type(path) != FIOC_FILE)
 		return -EINVAL;
@@ -169,7 +169,7 @@ static int fioc_truncate(const char *path, off_t size)
 }
 
 static int fioc_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-			off_t offset, struct fuse_file_info *fi,
+			off64_t offset, struct fuse_file_info *fi,
 			enum fuse_readdir_flags flags)
 {
 	(void) fi;

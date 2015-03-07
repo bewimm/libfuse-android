@@ -29,7 +29,13 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#if defined(__ANDROID__)
+#include <sys/vfs.h>
+#define statvfs statfs
+#define fstatvfs fstatfs
+#else
 #include <sys/statvfs.h>
+#endif
 #include <sys/uio.h>
 
 #ifdef __cplusplus
@@ -464,7 +470,7 @@ struct fuse_lowlevel_ops {
 	 * @param off offset to read from
 	 * @param fi file information
 	 */
-	void (*read) (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
+	void (*read) (fuse_req_t req, fuse_ino_t ino, size_t size, off64_t off,
 		      struct fuse_file_info *fi);
 
 	/**
@@ -491,7 +497,7 @@ struct fuse_lowlevel_ops {
 	 * @param fi file information
 	 */
 	void (*write) (fuse_req_t req, fuse_ino_t ino, const char *buf,
-		       size_t size, off_t off, struct fuse_file_info *fi);
+		       size_t size, off64_t off, struct fuse_file_info *fi);
 
 	/**
 	 * Flush method
@@ -617,7 +623,7 @@ struct fuse_lowlevel_ops {
 	 * @param off offset to continue reading the directory stream
 	 * @param fi file information
 	 */
-	void (*readdir) (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
+	void (*readdir) (fuse_req_t req, fuse_ino_t ino, size_t size, off64_t off,
 			 struct fuse_file_info *fi);
 
 	/**
@@ -946,7 +952,7 @@ struct fuse_lowlevel_ops {
 	 * @param fi file information
 	 */
 	void (*write_buf) (fuse_req_t req, fuse_ino_t ino,
-			   struct fuse_bufvec *bufv, off_t off,
+			   struct fuse_bufvec *bufv, off64_t off,
 			   struct fuse_file_info *fi);
 
 	/**
@@ -964,7 +970,7 @@ struct fuse_lowlevel_ops {
 	 * @param bufv the buffer containing the returned data
 	 */
 	void (*retrieve_reply) (fuse_req_t req, void *cookie, fuse_ino_t ino,
-				off_t offset, struct fuse_bufvec *bufv);
+				off64_t offset, struct fuse_bufvec *bufv);
 
 	/**
 	 * Forget about multiple inodes
@@ -1020,7 +1026,7 @@ struct fuse_lowlevel_ops {
 	 *             see fallocate(2)
 	 */
 	void (*fallocate) (fuse_req_t req, fuse_ino_t ino, int mode,
-		       off_t offset, off_t length, struct fuse_file_info *fi);
+		       off64_t offset, off64_t length, struct fuse_file_info *fi);
 
 	/**
 	 * Read directory with attributes
@@ -1049,7 +1055,7 @@ struct fuse_lowlevel_ops {
 	 * @param off offset to continue reading the directory stream
 	 * @param fi file information
 	 */
-	void (*readdirplus) (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
+	void (*readdirplus) (fuse_req_t req, fuse_ino_t ino, size_t size, off64_t off,
 			 struct fuse_file_info *fi);
 };
 
@@ -1289,7 +1295,7 @@ int fuse_reply_bmap(fuse_req_t req, uint64_t idx);
  */
 size_t fuse_add_direntry(fuse_req_t req, char *buf, size_t bufsize,
 			 const char *name, const struct stat *stbuf,
-			 off_t off);
+			 off64_t off);
 
 /**
  * Add a directory entry to the buffer with the attributes
@@ -1317,7 +1323,7 @@ size_t fuse_add_direntry(fuse_req_t req, char *buf, size_t bufsize,
  */
 size_t fuse_add_direntry_plus(fuse_req_t req, char *buf, size_t bufsize,
 			      const char *name,
-			      const struct fuse_entry_param *e, off_t off);
+			      const struct fuse_entry_param *e, off64_t off);
 
 /**
  * Reply to ask for data fetch and output buffer preparation.  ioctl
@@ -1397,7 +1403,7 @@ int fuse_lowlevel_notify_poll(struct fuse_pollhandle *ph);
  * @return zero for success, -errno for failure
  */
 int fuse_lowlevel_notify_inval_inode(struct fuse_chan *ch, fuse_ino_t ino,
-                                     off_t off, off_t len);
+                                     off64_t off, off64_t len);
 
 /**
  * Notify to invalidate parent attributes and the dentry matching
@@ -1458,7 +1464,7 @@ int fuse_lowlevel_notify_delete(struct fuse_chan *ch,
  * @return zero for success, -errno for failure
  */
 int fuse_lowlevel_notify_store(struct fuse_chan *ch, fuse_ino_t ino,
-			       off_t offset, struct fuse_bufvec *bufv,
+			       off64_t offset, struct fuse_bufvec *bufv,
 			       enum fuse_buf_copy_flags flags);
 /**
  * Retrieve data from the kernel buffers
@@ -1486,7 +1492,7 @@ int fuse_lowlevel_notify_store(struct fuse_chan *ch, fuse_ino_t ino,
  * @return zero for success, -errno for failure
  */
 int fuse_lowlevel_notify_retrieve(struct fuse_chan *ch, fuse_ino_t ino,
-				  size_t size, off_t offset, void *cookie);
+				  size_t size, off64_t offset, void *cookie);
 
 
 /* ----------------------------------------------------------- *

@@ -81,7 +81,7 @@ static int xmp_readlink(const char *path, char *buf, size_t size)
 
 
 static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-		       off_t offset, struct fuse_file_info *fi,
+		       off64_t offset, struct fuse_file_info *fi,
 		       enum fuse_readdir_flags flags)
 {
 	DIR *dp;
@@ -219,7 +219,7 @@ static int xmp_chown(const char *path, uid_t uid, gid_t gid)
 	return 0;
 }
 
-static int xmp_truncate(const char *path, off_t size)
+static int xmp_truncate(const char *path, off64_t size)
 {
 	int res;
 
@@ -256,7 +256,7 @@ static int xmp_open(const char *path, struct fuse_file_info *fi)
 	return 0;
 }
 
-static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
+static int xmp_read(const char *path, char *buf, size_t size, off64_t offset,
 		    struct fuse_file_info *fi)
 {
 	int fd;
@@ -276,7 +276,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 }
 
 static int xmp_write(const char *path, const char *buf, size_t size,
-		     off_t offset, struct fuse_file_info *fi)
+		     off64_t offset, struct fuse_file_info *fi)
 {
 	int fd;
 	int res;
@@ -286,7 +286,7 @@ static int xmp_write(const char *path, const char *buf, size_t size,
 	if (fd == -1)
 		return -errno;
 
-	res = pwrite(fd, buf, size, offset);
+	res = pwrite64(fd, buf, size, offset);
 	if (res == -1)
 		res = -errno;
 
@@ -329,7 +329,7 @@ static int xmp_fsync(const char *path, int isdatasync,
 
 #ifdef HAVE_POSIX_FALLOCATE
 static int xmp_fallocate(const char *path, int mode,
-			off_t offset, off_t length, struct fuse_file_info *fi)
+			off64_t offset, off64_t length, struct fuse_file_info *fi)
 {
 	int fd;
 	int res;

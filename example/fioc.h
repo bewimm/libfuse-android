@@ -33,7 +33,7 @@ enum {
 };
 
 struct fioc_rw_arg {
-	off_t		offset;
+	off64_t		offset;
 	void		*buf;
 	size_t		size;
 	size_t		prev_size;	/* out param for previous total size */

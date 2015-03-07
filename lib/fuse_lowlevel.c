@@ -324,7 +324,7 @@ static size_t fuse_dirent_size(size_t namelen)
 }
 
 static void fuse_add_dirent(struct fuse_dirent *dirent, const char *name,
-			    const struct stat *stbuf, off_t off)
+			    const struct stat *stbuf, off64_t off)
 {
 	unsigned namelen = strlen(name);
 	unsigned entlen = FUSE_NAME_OFFSET + namelen;
@@ -341,7 +341,7 @@ static void fuse_add_dirent(struct fuse_dirent *dirent, const char *name,
 }
 
 size_t fuse_add_direntry(fuse_req_t req, char *buf, size_t bufsize,
-			 const char *name, const struct stat *stbuf, off_t off)
+			 const char *name, const struct stat *stbuf, off64_t off)
 {
 	size_t entsize;
 
@@ -362,7 +362,11 @@ static void convert_statfs(const struct statvfs *stbuf,
 	kstatfs->bavail	 = stbuf->f_bavail;
 	kstatfs->files	 = stbuf->f_files;
 	kstatfs->ffree	 = stbuf->f_ffree;
+#if defined(__ANDROID__)
+	kstatfs->namelen = stbuf->f_namelen;
+#else
 	kstatfs->namelen = stbuf->f_namemax;
+#endif
 }
 
 static int send_reply_ok(fuse_req_t req, const void *arg, size_t argsize)
@@ -415,7 +419,7 @@ static void fill_entry(struct fuse_entry_out *arg,
 
 size_t fuse_add_direntry_plus(fuse_req_t req, char *buf, size_t bufsize,
 			      const char *name,
-			      const struct fuse_entry_param *e, off_t off)
+			      const struct fuse_entry_param *e, off64_t off)
 {
 	size_t entsize;
 
@@ -1555,7 +1559,11 @@ static void do_statfs(fuse_req_t req, fuse_ino_t nodeid, const void *inarg)
 		req->f->op.statfs(req, nodeid);
 	else {
 		struct statvfs buf = {
+#if defined(__ANDROID__)
+			.f_namelen = 255,
+#else
 			.f_namemax = 255,
+#endif
 			.f_bsize = 512,
 		};
 		fuse_reply_statfs(req, &buf);
@@ -2152,7 +2160,7 @@ int fuse_lowlevel_notify_poll(struct fuse_pollhandle *ph)
 }
 
 int fuse_lowlevel_notify_inval_inode(struct fuse_chan *ch, fuse_ino_t ino,
-                                     off_t off, off_t len)
+                                     off64_t off, off64_t len)
 {
 	struct fuse_notify_inval_inode_out outarg;
 	struct fuse_ll *f;
@@ -2233,7 +2241,7 @@ int fuse_lowlevel_notify_delete(struct fuse_chan *ch,
 }
 
 int fuse_lowlevel_notify_store(struct fuse_chan *ch, fuse_ino_t ino,
-			       off_t offset, struct fuse_bufvec *bufv,
+			       off64_t offset, struct fuse_bufvec *bufv,
 			       enum fuse_buf_copy_flags flags)
 {
 	struct fuse_out_header out;
@@ -2317,7 +2325,7 @@ out:
 }
 
 int fuse_lowlevel_notify_retrieve(struct fuse_chan *ch, fuse_ino_t ino,
-				  size_t size, off_t offset, void *cookie)
+				  size_t size, off64_t offset, void *cookie)
 {
 	struct fuse_notify_retrieve_out outarg;
 	struct fuse_ll *f;

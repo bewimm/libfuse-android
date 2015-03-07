@@ -78,20 +78,25 @@ static const char *get_user_name(void)
 static uid_t oldfsuid;
 static gid_t oldfsgid;
 
+
 static void drop_privs(void)
 {
+#if !defined(__ANDROID__)
 	if (getuid() != 0) {
 		oldfsuid = setfsuid(getuid());
 		oldfsgid = setfsgid(getgid());
 	}
+#endif
 }
 
 static void restore_privs(void)
 {
+#if !defined(__ANDROID__)
 	if (getuid() != 0) {
 		setfsuid(oldfsuid);
 		setfsgid(oldfsgid);
 	}
+#endif
 }
 
 #ifndef IGNORE_MTAB
@@ -714,7 +719,7 @@ static int get_string_opt(const char *s, unsigned len, const char *opt,
 
 static int do_mount(const char *mnt, char **typep, mode_t rootmode,
 		    int fd, const char *opts, const char *dev, char **sourcep,
-		    char **mnt_optsp, off_t rootsize)
+		    char **mnt_optsp, off64_t rootsize)
 {
 	int res;
 	int flags = MS_NOSUID | MS_NODEV;

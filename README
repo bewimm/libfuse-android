@@ -1,3 +1,25 @@
+Differences from original code
+==============================
+
+1) All usages of off_t have been replaced with off64_t because the android c library (bionic)
+ignores the normally used D_FILE_OFFSET_BITS=64
+
+2) the config.h file has been generated using the following commands:
+export ANDROID_ROOT=<ndk-dir>
+
+./configure -host=arm-linux-androideabi CC=arm-linux-androideabi-gcc \
+CPPFLAGS="-I$ANDROID_ROOT/platforms/android-16/arch-arm/usr/include/"\
+CFLAGS="-nostdlib" LDFLAGS="-Wl,-rpath-link=$ANDROID_ROOT/platforms/android-16/arch-arm/usr/lib/ \
+-L$ANDROID_ROOT/platforms/android-16/arch-arm/usr/lib/" LIBS="-lc "
+
+in the generated config file
+#define HAVE_UTIMENSAT 1
+has also been replaced by
+/* #undef HAVE_UTIMENSAT */
+
+known bug:
+8 of the test_open_acc() tests fail (error should be EACCESS but the file handle is not -1)
+
 General Information
 ===================
 
